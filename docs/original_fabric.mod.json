@@ -1,0 +1,40 @@
+{
+    "schemaVersion": 1,
+    "id": "jeresources",
+    "version": "1.9.0.31",
+  
+    "name": "Just Enough Resources",
+    "description": "Adds Resources and Mob Drops to JEI",
+    "authors": [
+      "way2muchnoise"
+    ],
+    "contact": {
+      "homepage": "https://www.curseforge.com/minecraft/mc-mods/just-enough-resources-jer",
+      "sources": "https://github.com/way2muchnoise/JustEnoughResources"
+    },
+    "license": "\"Don't Be a Jerk\" non-commercial care-free license",
+    "environment": "*",
+    "entrypoints": {
+      "client" : [
+        "jeresources.fabric.JEResources"
+      ],
+      "modmenu": [
+        "jeresources.fabric.config.JEResourcesModMenu"
+      ],
+      "jei_mod_plugin": [
+        "jeresources.jei.JEIConfig"
+      ]
+    },
+    "mixins": [
+      "jeresources.mixins.json"
+    ],
+    "depends": {
+      "fabricloader": ">=0.14",
+      "fabric": "*",
+      "minecraft": "1.21.x",
+      "java": ">=17"
+    },
+    "suggests": {
+    },
+    "accessWidener": "jeresources.accesswidener"
+}

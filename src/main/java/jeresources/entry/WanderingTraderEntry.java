@@ -1,0 +1,52 @@
+package jeresources.entry;
+
+import jeresources.compatibility.CompatBase;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.entity.EntitySpawnReason;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.npc.wanderingtrader.WanderingTrader;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.trading.VillagerTrade;
+
+import java.util.*;
+
+public class WanderingTraderEntry extends AbstractVillagerEntry<WanderingTrader> {
+
+    public WanderingTraderEntry(List<VillagerTrade> wanderingTrades) {
+        super(buildTradesByLevel(wanderingTrades));
+    }
+
+    private static Map<Integer, List<VillagerTrade>> buildTradesByLevel(List<VillagerTrade> trades) {
+        Map<Integer, List<VillagerTrade>> map = new HashMap<>();
+        map.put(1, trades);
+        return map;
+    }
+
+    @Override
+    public Component getDisplayName() {
+        return Component.translatable("entity.minecraft.wandering_trader");
+    }
+
+    public WanderingTrader getVillagerEntity() {
+        if (this.entity == null) {
+            this.entity = EntityType.WANDERING_TRADER.create(CompatBase.getLevel(), EntitySpawnReason.LOAD);
+            assert this.entity != null;
+        }
+        return this.entity;
+    }
+
+    @Override
+    public List<ItemStack> getPois() {
+        return Collections.emptyList();
+    }
+
+    @Override
+    public boolean hasPois() {
+        return false;
+    }
+
+    @Override
+    public boolean hasLevels() {
+        return false;
+    }
+}
