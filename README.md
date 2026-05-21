@@ -2,4 +2,8 @@
 
 A rewrite of [NotEnoughResources](https://github.com/hilburn/NotEnoughResources) using [JustEnoughItems](https://github.com/mezz/JustEnoughItems)
 
+This fork is a direct port to Minecraft 26.1.2, Fabric Version: 0.19.2 
+
+From my testing, every feature works! hopefully this will help
+
 If you want to generate custom ore graphs, I advise [RegionScanner](https://github.com/RundownRhino/RegionScanner).
