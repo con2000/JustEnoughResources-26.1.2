@@ -31,7 +31,7 @@ This checklist tracks the porting of features from JustEnoughResources-Fabric-1.
 - [ ] Search/filter system operational
 - [ ] Item entries display with proper icons
 - [ ] Tooltip information accurate
-- [ ] Configuration screen accessible
+- [ ] Configuration screen accessible (ModMenu remap issue pending)
 - [ ] Settings adjustable and persisting
 
 ### [ ] Compatibility & Integration
@@ -44,7 +44,7 @@ This checklist tracks the porting of features from JustEnoughResources-Fabric-1.
 ## Technical Implementation
 
 ### [ ] Build System
-- [ ] Gradle build passes without errors
+- [x] Gradle build passes without errors
 - [ ] Correct Fabric Loom version (1.15.5)
 - [ ] Proper dependency resolution
 - [ ] Access widener functioning
@@ -68,7 +68,7 @@ This checklist tracks the porting of features from JustEnoughResources-Fabric-1.
 ## Known Issues & Limitations
 
 ### [ ] Stubs Requiring Implementation
-- [x] ModMenu integration (blocked by Loom remap issue)
+- [x] ModMenu integration tracked as blocked by Loom remap issue
 - [ ] RenderHelper.entity() stub
 - [ ] RenderHelper.block() stub
 
@@ -88,7 +88,7 @@ For each feature to be considered complete:
 
 ## Progress Tracking
 
-Last updated: $(date)
+Last updated: 2026-05-21
 Target completion: All features ported and verified
 
 ## Definition of Done

@@ -3,6 +3,7 @@ package jeresources.util;
 import com.mojang.blaze3d.vertex.PoseStack;
 import jeresources.api.render.IMobRenderHook;
 import jeresources.client.render.Jer3DBlockRenderer26;
+import jeresources.config.Settings;
 import jeresources.compatibility.api.MobRegistryImpl;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
@@ -10,6 +11,7 @@ import net.minecraft.client.renderer.entity.EntityRenderDispatcher;
 import net.minecraft.client.renderer.entity.state.EntityRenderState;
 import net.minecraft.client.renderer.entity.state.LivingEntityRenderState;
 import net.minecraft.client.renderer.RenderPipelines;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ItemStack;
@@ -18,9 +20,13 @@ import net.minecraft.world.level.block.state.BlockState;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
 
+import java.util.HashSet;
 import java.lang.Math;
+import java.util.Set;
 
 public class RenderHelper {
+    private static final Set<String> logged3dPreviewFailures = new HashSet<>();
+
     public static void drawLine(GuiGraphicsExtractor guiGraphics, int xBegin, int yBegin, int xEnd, int yEnd, int color) {
         xEnd += xBegin == xEnd ? 1 : 0;
         yEnd += yBegin == yEnd ? 1 : 0;
@@ -113,10 +119,49 @@ public class RenderHelper {
     }
 
     public static void renderBlock(GuiGraphicsExtractor guiGraphics, BlockState block, float x, float y, float z, float rotate, float scale) {
+        if (block == null) {
+            return;
+        }
+
+        ItemStack fallbackStack = new ItemStack(block.getBlock());
+        Identifier blockId = BuiltInRegistries.BLOCK.getKey(block.getBlock());
+        String blockIdString = blockId.toString();
+        boolean force2d = !Settings.enable3DBlockPreview
+            || containsIgnoreCase(Settings.force2DPreviewNamespaces, blockId.getNamespace())
+            || containsIgnoreCase(Settings.force2DPreviewBlocks, blockIdString);
+
         int size = Math.max(12, Math.round(scale * 1.6F));
         int drawX = Math.round(x - size / 2.0F);
         int drawY = Math.round(y + z - size / 2.0F);
-        Jer3DBlockRenderer26.renderBlockPreview(guiGraphics, block, drawX, drawY, size, rotate, -30.0F);
+        if (force2d) {
+            guiGraphics.item(fallbackStack, drawX, drawY);
+            return;
+        }
+
+        try {
+            Jer3DBlockRenderer26.renderBlockPreview(guiGraphics, block, drawX, drawY, size, rotate, -30.0F);
+        } catch (Throwable t) {
+            String failureKey = blockIdString + "|" + t.getClass().getName();
+            if (logged3dPreviewFailures.add(failureKey)) {
+                LogHelper.warn("JER 3D preview failed for {} ({}); using 2D fallback", blockIdString, t.getClass().getSimpleName());
+                LogHelper.debug("JER 3D preview exception details for " + blockIdString, t);
+            }
+            if (Settings.fallbackTo2DBlockPreviewOnError) {
+                guiGraphics.item(fallbackStack, drawX, drawY);
+            }
+        }
+    }
+
+    private static boolean containsIgnoreCase(String[] values, String query) {
+        if (values == null || query == null) {
+            return false;
+        }
+        for (String value : values) {
+            if (value != null && value.equalsIgnoreCase(query)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public static void drawTexture(GuiGraphicsExtractor guiGraphics, Identifier resource, int x, int y, int u, int v, int width, int height) {

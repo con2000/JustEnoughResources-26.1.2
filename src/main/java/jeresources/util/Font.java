@@ -10,6 +10,7 @@ import java.util.List;
 public class Font {
     public final static Font small = new Font(true);
     public final static Font normal = new Font(false);
+    private static final int DEFAULT_TEXT_COLOR = 0x404040;
 
     private final boolean isSmall;
     private static final float SCALING = 0.75F;
@@ -28,7 +29,7 @@ public class Font {
      */
     public void print(GuiGraphicsExtractor guiGraphics, String line, int x, int y) {
         doTransform(guiGraphics, x, y);
-        guiGraphics.text(getMCFont(), line, 0, 0, 8, false);
+        guiGraphics.text(getMCFont(), line, 0, 0, DEFAULT_TEXT_COLOR, false);
         guiGraphics.pose().popMatrix();
     }
 
@@ -38,7 +39,7 @@ public class Font {
 
     public void print(GuiGraphicsExtractor guiGraphics, FormattedCharSequence line, int x, int y) {
         doTransform(guiGraphics, x, y);
-        guiGraphics.text(getMCFont(), line, 0, 0, 8, false);
+        guiGraphics.text(getMCFont(), line, 0, 0, DEFAULT_TEXT_COLOR, false);
         guiGraphics.pose().popMatrix();
     }
 
@@ -52,7 +53,7 @@ public class Font {
         List<FormattedCharSequence> lines = Minecraft.getInstance().font.split(Component.literal(line), scaledWidth);
         int scaledLineHeight = (int) (Minecraft.getInstance().font.lineHeight * (isSmall ? SCALING : 1));
         for (int i = 0; i < lines.size(); i++) {
-            guiGraphics.text(getMCFont(), lines.get(i), 0, i * scaledLineHeight, 8, false);
+            guiGraphics.text(getMCFont(), lines.get(i), 0, i * scaledLineHeight, DEFAULT_TEXT_COLOR, false);
 
         }
         guiGraphics.pose().popMatrix();

@@ -17,6 +17,10 @@ public final class Settings {
     public static String[] hiddenCategories = new String[0];
     public static boolean showDevData = false;
     public static boolean disableLootManagerReloading = false;
+    public static boolean enable3DBlockPreview = true;
+    public static boolean fallbackTo2DBlockPreviewOnError = true;
+    public static String[] force2DPreviewNamespaces = new String[0];
+    public static String[] force2DPreviewBlocks = new String[0];
     public static List<Integer> excludedDimensions = List.of(-11);
 
     public static void reload() {

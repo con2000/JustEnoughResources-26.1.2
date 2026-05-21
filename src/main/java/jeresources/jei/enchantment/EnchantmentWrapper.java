@@ -59,7 +59,6 @@ public class EnchantmentWrapper implements IRecipeCategoryExtension<EnchantmentW
 
     @Override
     public void drawInfo(EnchantmentWrapper recipe, int recipeWidth, int recipeHeight, @NotNull GuiGraphicsExtractor guiGraphics, double mouseX, double mouseY) {
-        // TODO: fix this text rendering
         int y = FIRST_ENCHANT_Y;
         for (EnchantmentEntry enchantment : getEnchantments()) {
             Font.normal.print(guiGraphics, enchantment.getTranslatedWithLevels(), ENCHANT_X, y);

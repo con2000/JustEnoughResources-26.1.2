@@ -13,7 +13,7 @@
       "sources": "https://${githubUrl}"
     },
     "license": "\"Don't Be a Jerk\" non-commercial care-free license",
-    "environment": "*",
+    "environment": "client",
     "entrypoints": {
       "client" : [
         "jeresources.fabric.JEResources"
@@ -27,7 +27,7 @@
     ],
     "depends": {
       "fabricloader": ">=${fabricLoaderVersion}",
-      "fabric": "*",
+      "fabric-api": "*",
       "minecraft": "${minecraftVersionRange}",
       "java": ">=${modJavaVersion}"
     },
