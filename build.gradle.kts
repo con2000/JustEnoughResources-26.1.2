@@ -31,6 +31,12 @@ java {
     targetCompatibility = JavaVersion.VERSION_25
 }
 
+sourceSets {
+    named("main") {
+        java.srcDir("src/client/java")
+    }
+}
+
 loom {
     accessWidenerPath.set(file("src/main/resources/jeresources.accesswidener"))
 }
@@ -67,19 +73,20 @@ tasks.withType<JavaCompile> {
 }
 
 tasks.withType<ProcessResources> {
-    inputs.property("version", version)
+    val resourceProps = mapOf(
+        "modId" to modId,
+        "modName" to modName,
+        "version" to version.toString(),
+        "minecraftVersionRange" to minecraftVersionRange,
+        "fabricLoaderVersion" to fabricLoaderVersion,
+        "modJavaVersion" to modJavaVersion,
+        "githubUrl" to githubUrl,
+        "modAuthor" to modAuthor
+    )
+    inputs.properties(resourceProps)
 
     filesMatching("fabric.mod.json") {
-        expand(
-            "modId" to modId,
-            "modName" to modName,
-            "version" to version,
-            "minecraftVersionRange" to minecraftVersionRange,
-            "fabricLoaderVersion" to fabricLoaderVersion,
-            "modJavaVersion" to modJavaVersion,
-            "githubUrl" to githubUrl,
-            "modAuthor" to modAuthor,
-        )
+        expand(resourceProps)
     }
 }
 

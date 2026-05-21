@@ -1,8 +1,8 @@
 package jeresources.util;
 
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.math.Axis;
 import jeresources.api.render.IMobRenderHook;
+import jeresources.client.render.Jer3DBlockRenderer26;
 import jeresources.compatibility.api.MobRegistryImpl;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
@@ -13,6 +13,7 @@ import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
@@ -98,14 +99,8 @@ public class RenderHelper {
     }
 
     public static void renderChest(GuiGraphicsExtractor guiGraphics, float x, float y, float rotate, float scale, float lidAngle) {
-        // RenderType rendertype = RenderType.guiTextured(Resources.Vanilla.CHEST);
-        // VertexConsumer buffer = Minecraft.getInstance().renderBuffers().bufferSource().getBuffer(rendertype);
-        // TODO: Reimplement
-        // ChestModel modelchest = new ChestModel();
-
+        // Chest model rendering API changed in 26.1.2; keep chest visible via item render.
         PoseStack poseStack = new PoseStack();
-        // RenderSystem.enableRescaleNormal();
-        // RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
         poseStack.translate(x, y, 50.0F);
         poseStack.mulPose(new Quaternionf(-160.0F, 1.0F, 0.0F, 0.0F));
         poseStack.scale(scale, -scale, -scale);
@@ -113,38 +108,15 @@ public class RenderHelper {
         poseStack.mulPose(new Quaternionf(rotate, 0.0F, 1.0F, 0.0F));
         poseStack.translate(-0.5F, -0.5F, -0.5F);
 
-        float lidAngleF = lidAngle / 180;
-        lidAngleF = 1.0F - lidAngleF;
-        lidAngleF = 1.0F - lidAngleF * lidAngleF * lidAngleF;
-        // modelchest.getLid().rotateAngleX = -(lidAngleF * (float) Math.PI / 2.0F);
-        // modelchest.field_78233_c.offsetX += 0.1F;
-        // modelchest.field_78233_c.offsetZ += 0.12F; // chestKnob
-        // modelchest.field_78232_b.offsetX -= 0.755F; // chestBelow
-        // modelchest.field_78232_b.offsetY -= 0.4F; // chestBelow
-        // modelchest.field_78232_b.offsetZ -= 0.9F; // chestBelow
-        // modelchest.renderAll();
-        // RenderSystem.disableRescaleNormal();
+        ItemStack stack = new ItemStack(Blocks.CHEST);
+        guiGraphics.item(stack, Math.round(x), Math.round(y));
     }
 
     public static void renderBlock(GuiGraphicsExtractor guiGraphics, BlockState block, float x, float y, float z, float rotate, float scale) {
-        // Simplest approach for GUI: render block as item
-        // This preserves the visual appearance while being much simpler than full block rendering
-        ItemStack stack = new ItemStack(block.getBlock());
-        
-        // Apply the same transformations as the original code for consistency
-        PoseStack poseStack = new PoseStack();
-        poseStack.translate(x, y, z);
-        poseStack.scale(-scale, -scale, -scale);
-        poseStack.translate(-0.5F, -0.5F, 0);
-        poseStack.mulPose(Axis.XP.rotationDegrees(-30F));
-        poseStack.translate(0.5F, 0, -0.5F);
-        poseStack.mulPose(Axis.YP.rotationDegrees(rotate));
-        poseStack.translate(-0.5F, 0, 0.5F);
-        
-        // Convert pose to GUI coordinates for item rendering
-        // Note: This is an approximation - the original code did 3D block rendering
-        // For GUI purposes, we'll render as an item at the specified 2D position
-        guiGraphics.item(stack, Math.round(x), Math.round(y + z));
+        int size = Math.max(12, Math.round(scale * 1.6F));
+        int drawX = Math.round(x - size / 2.0F);
+        int drawY = Math.round(y + z - size / 2.0F);
+        Jer3DBlockRenderer26.renderBlockPreview(guiGraphics, block, drawX, drawY, size, rotate, -30.0F);
     }
 
     public static void drawTexture(GuiGraphicsExtractor guiGraphics, Identifier resource, int x, int y, int u, int v, int width, int height) {
