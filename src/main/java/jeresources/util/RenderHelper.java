@@ -1,20 +1,21 @@
 package jeresources.util;
 
-import com.mojang.blaze3d.vertex.*;
+import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
 import jeresources.api.render.IMobRenderHook;
 import jeresources.compatibility.api.MobRegistryImpl;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
-import net.minecraft.client.gui.navigation.ScreenRectangle;
-import net.minecraft.client.gui.screens.inventory.InventoryScreen;
-import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.entity.EntityRenderDispatcher;
+import net.minecraft.client.renderer.entity.state.EntityRenderState;
+import net.minecraft.client.renderer.entity.state.LivingEntityRenderState;
 import net.minecraft.client.renderer.RenderPipelines;
-import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.state.BlockState;
-import org.joml.*;
+import org.joml.Quaternionf;
+import org.joml.Vector3f;
 
 import java.lang.Math;
 
@@ -26,34 +27,74 @@ public class RenderHelper {
     }
 
     public static void renderEntity(GuiGraphicsExtractor guiGraphics, int x1, int y1, int x2, int y2, double scale, double yaw, double pitch, LivingEntity livingEntity) {
+        // 1. Apply render hooks (gets x/y/scale/yaw/pitch adjustments)
         PoseStack mobPoseStack = new PoseStack();
-        ScreenRectangle screenRectangle = new ScreenRectangle(x1, y1, x2 - x1, y2 - y1).transformAxisAligned(guiGraphics.pose());
-        IMobRenderHook.RenderInfo renderInfo = MobRegistryImpl.applyRenderHooks(mobPoseStack, livingEntity, new IMobRenderHook.RenderInfo(0, 0, scale, yaw, pitch));
+        IMobRenderHook.RenderInfo renderInfo = MobRegistryImpl.applyRenderHooks(
+            mobPoseStack, livingEntity,
+            new IMobRenderHook.RenderInfo(0, 0, scale, yaw, pitch)
+        );
         int x = renderInfo.x;
         int y = renderInfo.y;
-        mobPoseStack.translate(x, y, 0);
-        scale = renderInfo.scale;
-        yaw = renderInfo.yaw;
-        pitch = renderInfo.pitch;
-        mobPoseStack.mulPose(Axis.XN.rotationDegrees(((float) Math.atan((pitch / 40.0F))) * 20.0F));
-        livingEntity.yo = (float) Math.atan(yaw / 40.0F) * 20.0F;
-        float yRot = (float) Math.atan(yaw / 40.0F) * 40.0F;
-        float xRot = -((float) Math.atan(pitch / 40.0F)) * 20.0F;
-        livingEntity.setYRot(yRot);
-        livingEntity.setYRot(yRot);
-        livingEntity.setXRot(xRot);
-        livingEntity.yHeadRot = yRot;
-        livingEntity.yHeadRotO = yRot;
-        mobPoseStack.translate(0.0F, livingEntity.getBbHeight() / 2, 0.0F);
-        Vector3f translationVec = new Vector3f();
-        mobPoseStack.last().pose().getTranslation(translationVec);
-        Quaternionf rotationQuat = new Quaternionf();
-        mobPoseStack.last().pose().getUnnormalizedRotation(rotationQuat);
-        Quaternionf cameraQuat = (new Quaternionf()).rotateZ((float)Math.PI);
-        cameraQuat.mul(new Quaternionf().rotateY((float)Math.PI));
-        rotationQuat.mul(cameraQuat);
-        // TODO: Reimplement entity rendering for 26.1.2 API
-        // InventoryScreen.extractRenderState(guiGraphics, ...)
+        double finalScale = renderInfo.scale;
+        double finalYaw = renderInfo.yaw;
+        double finalPitch = renderInfo.pitch;
+
+        // 2. Calculate angles from yaw/pitch (matching old JER behavior)
+        float yRotAngle = (float) Math.atan(finalYaw / 40.0F) * 40.0F;
+        float xRotAngle = -((float) Math.atan(finalPitch / 40.0F)) * 20.0F;
+        float bodyRotOffset = (float) Math.atan(finalYaw / 40.0F) * 20.0F;
+
+        // 3. Extract render state from the entity
+        Minecraft mc = Minecraft.getInstance();
+        EntityRenderDispatcher dispatcher = mc.getEntityRenderDispatcher();
+        EntityRenderState renderState = dispatcher.extractEntity(livingEntity, 1.0f);
+        renderState.shadowPieces.clear();
+        renderState.outlineColor = 0;
+
+        // 4. Configure LivingEntityRenderState fields
+        if (renderState instanceof LivingEntityRenderState livingState) {
+            livingState.bodyRot = 180.0F + bodyRotOffset;
+            livingState.yRot = yRotAngle;
+            livingState.xRot = xRotAngle;
+
+            // Undo the entity's built-in scale; we apply our own scale via guiGraphics.entity()
+            livingState.boundingBoxWidth /= livingState.scale;
+            livingState.boundingBoxHeight /= livingState.scale;
+            livingState.scale = 1.0F;
+        }
+
+        // 5. Build camera and rotation quaternions (matching old JER behavior)
+        Quaternionf cameraQuat = new Quaternionf().rotateZ((float) Math.PI);
+        cameraQuat.mul(new Quaternionf().rotateY((float) Math.PI));
+
+        float pitchAngle = (float) Math.atan(finalPitch / 40.0F);
+        Quaternionf entityQuat = new Quaternionf().rotateX(
+            pitchAngle * 20.0F * ((float) Math.PI / 180.0F)  // DEG2RAD
+        );
+        // Combine: cameraQuat applies the entity pitch rotation on top of the camera transform
+        cameraQuat.mul(entityQuat);
+
+        // 6. Build translation vector (incorporating render hook x/y offsets)
+        float heightOffset = livingEntity.getBbHeight() / 2.0F;
+        Vector3f translationVec = new Vector3f((float) x, heightOffset + (float) y, 0.0F);
+
+        // 7. Apply any additional PoseStack transforms from render hooks
+        //    (extract composite transform from the hook-provided PoseStack)
+        if (!mobPoseStack.isEmpty()) {
+            Vector3f hookTranslation = new Vector3f();
+            mobPoseStack.last().pose().getTranslation(hookTranslation);
+            translationVec.add(hookTranslation);
+        }
+
+        // 8. Render via the new API
+        guiGraphics.entity(
+            renderState,
+            (float) finalScale,
+            translationVec,
+            cameraQuat,        // rotation (camera transform)
+            entityQuat,        // overrideCameraAngle (entity-facing override)
+            x1, y1, x2, y2     // screen bounding box
+        );
     }
 
     public static void renderChest(GuiGraphicsExtractor guiGraphics, float x, float y, float rotate, float scale, float lidAngle) {
@@ -86,7 +127,11 @@ public class RenderHelper {
     }
 
     public static void renderBlock(GuiGraphicsExtractor guiGraphics, BlockState block, float x, float y, float z, float rotate, float scale) {
-        Minecraft mc = Minecraft.getInstance();
+        // Simplest approach for GUI: render block as item
+        // This preserves the visual appearance while being much simpler than full block rendering
+        ItemStack stack = new ItemStack(block.getBlock());
+        
+        // Apply the same transformations as the original code for consistency
         PoseStack poseStack = new PoseStack();
         poseStack.translate(x, y, z);
         poseStack.scale(-scale, -scale, -scale);
@@ -95,12 +140,11 @@ public class RenderHelper {
         poseStack.translate(0.5F, 0, -0.5F);
         poseStack.mulPose(Axis.YP.rotationDegrees(rotate));
         poseStack.translate(-0.5F, 0, 0.5F);
-
-        poseStack.pushPose();
-        poseStack.translate(0, 0, -1);
-
-        // TODO: Reimplement block rendering for 26.1.2 API
-        // mc.getBlockRenderer().renderSingleBlock(...)
+        
+        // Convert pose to GUI coordinates for item rendering
+        // Note: This is an approximation - the original code did 3D block rendering
+        // For GUI purposes, we'll render as an item at the specified 2D position
+        guiGraphics.item(stack, Math.round(x), Math.round(y + z));
     }
 
     public static void drawTexture(GuiGraphicsExtractor guiGraphics, Identifier resource, int x, int y, int u, int v, int width, int height) {

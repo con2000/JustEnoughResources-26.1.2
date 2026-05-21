@@ -6,6 +6,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.NonNullList;
+import net.minecraft.core.SectionPos;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.player.Player;
@@ -58,7 +59,10 @@ public class ChunkProfiler implements Runnable {
         HitResult rayTraceResult = new BlockHitResult(new Vec3(0, 0, 0), Direction.DOWN, blockPos, true);
         Player player = Minecraft.getInstance().player;
 
-        final int maxY = chunk.getHighestSectionPosition();
+        int sectionIndex = chunk.getHighestFilledSectionIndex();
+        final int maxY = sectionIndex == ChunkAccess.NO_FILLED_SECTION
+            ? chunk.getMinY()
+            : SectionPos.sectionToBlockCoord(chunk.getSectionYFromSectionIndex(sectionIndex));
         for (int y = 0; y < maxY; y++)
             for (int x = 0; x < CHUNK_SIZE; x++)
                 for (int z = 0; z < CHUNK_SIZE; z++) {

@@ -13,8 +13,11 @@ Porting JustEnoughResources-Fabric-1.21.11-1.9.0.31 to Minecraft 26.1.2, Fabric 
 | Loot | 2 files | `DynamicLoot.name` (public field) | private field, needs getter | Needs fix |
 | Loot | 1 file | `SetItemCountFunction.value` (public field) | private field, needs getter | Needs fix |
 | World | 4 files | `ResourceKey.location()` | Record accessor (should work) | Investigate |
+| Profiling | 2 files | `ChunkAccess.getHighestSectionPosition()` (deprecated) | `getHighestFilledSectionIndex()` + `getSectionYFromSectionIndex()` + `SectionPos.sectionToBlockCoord()` | Fixed |
 | World | 1 file | `ServerLevel` 11-param constructor | 10-param constructor | Needs fix |
 | Render | 1 file | `Minecraft.getBlockRenderer()` | renamed | Needs fix |
+| Entity Rendering | 1 file | `InventoryScreen.renderEntityInInventory()` | `GuiGraphicsExtractor.entity()` + `EntityRenderState` | Fixed |
+| Block Rendering | 1 file | `BlockRenderDispatcher.renderSingleBlock()` | Item-based approximation (see RenderHelper.java) | Approximated |
 | Command | 1 file | `CommandSourceStack.hasPermission()` | renamed/removed | Needs fix |
 | JEI | 2 files | `IRecipeSlotTooltipCallback` import | Unused import, remove | Needs fix |
 | JEI | 1 file | `class_437` → `Screen` type | Mappings issue | Needs fix |

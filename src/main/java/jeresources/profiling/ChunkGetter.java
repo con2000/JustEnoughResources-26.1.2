@@ -68,7 +68,7 @@ public class ChunkGetter implements Runnable {
 
     private boolean areAllChunksEmpty(List<ChunkAccess> chunks) {
         for (ChunkAccess chunk : chunks) {
-            if (chunk.getHighestSectionPosition() != 0)
+            if (chunk.getHighestFilledSectionIndex() != ChunkAccess.NO_FILLED_SECTION)
                 return false;
         }
         return true;
